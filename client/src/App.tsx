@@ -1,11 +1,28 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {
+  const ws = useRef<WebSocket>(null);
   const [count, setCount] = useState(0)
 
+  useEffect(() => {
+    ws.current = new WebSocket('ws://localhost:8080');
+
+    ws.current.onopen = () => console.log('WebSocket connected');
+    ws.current.onmessage = (e) => console.log('Message:', e.data);
+    ws.current.onclose = () => console.log('WebSocket disconnected');
+
+    return () => {
+      ws.current?.close();
+    };
+  }, []);
+
+  const handleSendMessage = () => {
+    ws.current?.send('Hello server!');
+  };
+  
   return (
     <>
       <div>
@@ -28,6 +45,7 @@ function App() {
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
+      <button onClick={handleSendMessage}>Send Message</button>
     </>
   )
 }
