@@ -6,13 +6,21 @@ import './App.css'
 function App() {
   const ws = useRef<WebSocket>(null);
   const [count, setCount] = useState(0)
+  const [player, setPlayer] = useState("");
+  const [currentPlayers, setCurrentPlayers] = useState<string[]>([])
+
+  console.log(currentPlayers)
 
   useEffect(() => {
     ws.current = new WebSocket('ws://localhost:8080');
 
     ws.current.onopen = () => console.log('WebSocket connected');
-    ws.current.onmessage = (e) => console.log('Message:', e.data);
+    ws.current.onmessage = (e) => {
+      console.log('e', e)
+      setCurrentPlayers(e.data.split(','))
+    }
     ws.current.onclose = () => console.log('WebSocket disconnected');
+
 
     return () => {
       ws.current?.close();
@@ -20,8 +28,9 @@ function App() {
   }, []);
 
   const handleSendMessage = () => {
-    ws.current?.send('Hello server!');
+    ws.current?.send(player);
   };
+
   
   return (
     <>
@@ -45,7 +54,10 @@ function App() {
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
+      <input type="text" onChange={(e) => setPlayer(e.target.value)}/>
       <button onClick={handleSendMessage}>Send Message</button>
+      {currentPlayers.map((player) => <div>{player}</div>)}
+      {/* <div>{currentPlayers}</div> */}
     </>
   )
 }
