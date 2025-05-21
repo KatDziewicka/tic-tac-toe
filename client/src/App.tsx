@@ -2,33 +2,47 @@ import { useEffect, useRef, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import useWebSocket from 'react-use-websocket'
+import type { WebSocketLike } from 'react-use-websocket/dist/lib/types'
+
+const WEB_SOCKET_URL='ws://localhost:8080'
 
 function App() {
-  const ws = useRef<WebSocket>(null);
+  const webSocketRef = useRef<WebSocketLike>(null);
   const [count, setCount] = useState(0)
   const [player, setPlayer] = useState("");
   const [currentPlayers, setCurrentPlayers] = useState<string[]>([])
 
   console.log(currentPlayers)
 
-  useEffect(() => {
-    ws.current = new WebSocket('ws://localhost:8080');
-
-    ws.current.onopen = () => console.log('WebSocket connected');
-    ws.current.onmessage = (e) => {
+  const { getWebSocket, readyState, sendMessage } = useWebSocket(WEB_SOCKET_URL, {
+    onOpen: () => {
+      console.log('WebSocket connected');
+      webSocketRef.current = getWebSocket();
+    },
+    onClose: () => {
+      console.log('WebSocket disconnected');
+        },
+    onMessage: (e) => {
       console.log('e', e)
       setCurrentPlayers(e.data.split(','))
     }
-    ws.current.onclose = () => console.log('WebSocket disconnected');
+  });
 
-
+  console.log(readyState)
+  
+  // Lifecycle cleanup
+  useEffect(() => {
     return () => {
-      ws.current?.close();
+      if (webSocketRef.current && webSocketRef.current.readyState === WebSocket.OPEN) {
+        webSocketRef.current.close();
+      }
     };
   }, []);
 
+
   const handleSendMessage = () => {
-    ws.current?.send(player);
+    sendMessage(player)
   };
 
   
